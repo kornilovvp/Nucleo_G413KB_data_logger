@@ -69,6 +69,10 @@ uint32_t raw_adc1_ch1_val = 0;
 uint32_t raw_adc1_ch2_val = 0;
 uint32_t raw_adc1_ch3_val = 0;
 
+float rawf_adc1_ch1_val = 0;
+float rawf_adc1_ch2_val = 0;
+float rawf_adc1_ch3_val = 0;
+
 
 uint8_t msg_bug[32];
 int msg_len = 0;
@@ -139,6 +143,14 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  
+  
+  float Vref = 3.3f;
+  float Vzero = Vref/2.0f;
+  float Vcode = 0.0f;
+  float Vresult = 0.0f;
+  
+  
   while (1)
   {
     
@@ -158,9 +170,14 @@ int main(void)
     //HAL_ADCEx_InjectedPollForConversion(&hadc2, 1);  
     
     
-    raw_adc1_ch1_val = HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_1);
-    raw_adc1_ch2_val = 0; //HAL_ADCEx_InjectedGetValue(&hadc2, ADC_INJECTED_RANK_2);
-    raw_adc1_ch3_val = 0; //HAL_ADCEx_InjectedGetValue(&hadc2, ADC_INJECTED_RANK_3);   
+    Vcode = HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_1);
+    
+    Vresult = (Vcode-2047) * (Vref*2) / 4096;
+
+    
+    rawf_adc1_ch1_val =  Vresult;  //HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_1);
+    rawf_adc1_ch2_val = 0; //HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_2);
+    rawf_adc1_ch3_val = 0; //HAL_ADCEx_InjectedGetValue(&hadc2, ADC_INJECTED_RANK_3);   
     
     
     //raw_adc1_ch1_val = HAL_ADCEx_InjectedGetValue(&hadc2, ADC_INJECTED_RANK_1);
@@ -170,7 +187,8 @@ int main(void)
     
     
     
-    double data1 = raw_adc1_ch1_val;
+    //double data1 = raw_adc1_ch1_val;
+    double data1 = rawf_adc1_ch1_val;
     
     if(row_count < (ROW_LEN - 1) )
     {
