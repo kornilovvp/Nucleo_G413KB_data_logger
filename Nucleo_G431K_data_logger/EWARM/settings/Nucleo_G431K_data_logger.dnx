@@ -17,7 +17,7 @@
     </PlDriver>
     <StLinkDriver>
         <stlinkserialNo>001200214D4B500A20373831</stlinkserialNo>
-        <stlinkfoundProbes />
+        <stlinkfoundProbes>001200214D4B500A20373831:0674FF515456707067134456:</stlinkfoundProbes>
         <LeaveTargetRunning>_ 0</LeaveTargetRunning>
         <CStepIntDis>_ 0</CStepIntDis>
         <stlinkResetStyle>0</stlinkResetStyle>
@@ -28,7 +28,7 @@
         <EnforceMemoryConfiguration>1</EnforceMemoryConfiguration>
     </ArmDriver>
     <DebugChecksum>
-        <Checksum>1618042394</Checksum>
+        <Checksum>993793680</Checksum>
     </DebugChecksum>
     <Exceptions>
         <StopOnUncaught>_ 0</StopOnUncaught>

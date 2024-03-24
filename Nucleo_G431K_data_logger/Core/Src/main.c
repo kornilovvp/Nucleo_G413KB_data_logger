@@ -151,6 +151,10 @@ int main(void)
   float Vresult = 0.0f;
   
   
+  
+  HAL_ADCEx_Calibration_Start(&hadc1, ADC_DIFFERENTIAL_ENDED);
+  
+  
   while (1)
   {
     
@@ -188,7 +192,7 @@ int main(void)
     
     
     //double data1 = raw_adc1_ch1_val;
-    double data1 = rawf_adc1_ch1_val;
+    double data1 = (double)rawf_adc1_ch1_val;
     
     if(row_count < (ROW_LEN - 1) )
     {

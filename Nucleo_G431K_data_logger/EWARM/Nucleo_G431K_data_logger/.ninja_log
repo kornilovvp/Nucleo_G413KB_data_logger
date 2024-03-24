@@ -94,3 +94,9 @@
 3	434	7318904374020819	C:/STM32_Rep/Nucleo_G431K_data_logger/Nucleo_G431K_data_logger/EWARM/Nucleo_G431K_data_logger/Obj/Application/User/Core/main.o	5974f0aa0b6e708c
 437	589	7318904375560863	C:/STM32_Rep/Nucleo_G431K_data_logger/Nucleo_G431K_data_logger/EWARM/Nucleo_G431K_data_logger/Exe/Nucleo_G431K_data_logger.out	779594c27287e115
 595	615	7318904375970878	C:/STM32_Rep/Nucleo_G431K_data_logger/Nucleo_G431K_data_logger/EWARM/Nucleo_G431K_data_logger/Exe/Nucleo_G431K_data_logger.hex	258e0857834880b7
+4	498	7330011975786965	C:/STM32_Rep/Nucleo_G431K_data_logger/Nucleo_G431K_data_logger/EWARM/Nucleo_G431K_data_logger/Obj/Application/User/Core/main.o	5974f0aa0b6e708c
+501	968	7330011980415215	C:/STM32_Rep/Nucleo_G431K_data_logger/Nucleo_G431K_data_logger/EWARM/Nucleo_G431K_data_logger/Exe/Nucleo_G431K_data_logger.out	779594c27287e115
+973	1002	7330011980986852	C:/STM32_Rep/Nucleo_G431K_data_logger/Nucleo_G431K_data_logger/EWARM/Nucleo_G431K_data_logger/Exe/Nucleo_G431K_data_logger.hex	258e0857834880b7
+3	391	7330012376505059	C:/STM32_Rep/Nucleo_G431K_data_logger/Nucleo_G431K_data_logger/EWARM/Nucleo_G431K_data_logger/Obj/Application/User/Core/main.o	5974f0aa0b6e708c
+395	575	7330012378284632	C:/STM32_Rep/Nucleo_G431K_data_logger/Nucleo_G431K_data_logger/EWARM/Nucleo_G431K_data_logger/Exe/Nucleo_G431K_data_logger.out	779594c27287e115
+579	596	7330012378714624	C:/STM32_Rep/Nucleo_G431K_data_logger/Nucleo_G431K_data_logger/EWARM/Nucleo_G431K_data_logger/Exe/Nucleo_G431K_data_logger.hex	258e0857834880b7
