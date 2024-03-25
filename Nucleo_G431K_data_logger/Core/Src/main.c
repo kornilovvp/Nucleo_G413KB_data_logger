@@ -27,6 +27,12 @@
 #include <string.h>
 
 
+#include "NanoEdgeAI.h"
+
+
+
+
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -77,8 +83,6 @@ float rawf_adc1_ch3_val = 0;
 
 uint8_t msg_bug[32];
 int msg_len = 0;
-
-
 
 
 
@@ -158,6 +162,45 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 
 
+////////////////////////////////////////////////////////////////////////////////
+
+// AI
+
+
+// AI
+#define LEARNING_ITERATIONS 20
+float input_user_buffer[DATA_INPUT_USER * AXIS_NUMBER]; // 1536 * 1 = 1536
+// Buffer of input values 
+
+
+/* Private function prototypes defined by user ---------------------------------*/
+/*
+ * @brief Collect data process
+ *
+ * This function is defined by user, depends on applications and sensors
+ *
+ * @param sample_buffer: [in, out] buffer of sample values
+ * @retval None
+ * @note   If AXIS_NUMBER = 3 (cf NanoEdgeAI.h), the buffer must be
+ *         ordered as follow:
+ *         [x0 y0 z0 x1 y1 z1 ... xn yn zn], where xi, yi and zi
+ *         are the values for x, y and z axes, n is equal to
+ *         DATA_INPUT_USER (cf NanoEdgeAI.h)
+ */
+void fill_buffer(float input_buffer[])
+{
+	/* USER BEGIN */
+	/* USER END */
+}
+
+
+
+
+
+
+
+
+
 
 /* USER CODE END 0 */
 
@@ -212,7 +255,7 @@ int main(void)
   
   //float Vref = 3.3f;
   //float Vzero = Vref/2.0f;
-  float Vcode = 0.0f;
+  //float Vcode = 0.0f;
   float Vresult = 0.0f;
   
   
@@ -224,6 +267,55 @@ int main(void)
   HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_raw_data, 3);
   
   
+  
+  
+  
+  
+  
+  
+  
+    // ai
+    enum neai_state error_code = neai_anomalydetection_init();
+    
+    uint8_t similarity = 0;  
+
+    if (error_code != NEAI_OK) 
+    {
+        /* This happens if the library works into a not supported board. */
+        __NOP();
+        __NOP();
+        __NOP();
+        __NOP();
+    }
+
+    
+    
+    
+    /* Learning process ----------------------------------------------------------*/
+    
+    /*
+    for (uint16_t iteration = 0 ; iteration < LEARNING_ITERATIONS ; iteration++) 
+    {
+        fill_buffer(input_user_buffer);
+        
+        neai_anomalydetection_learn(input_user_buffer);
+    }
+    */
+  
+    /*
+
+    // while(1)
+
+    fill_buffer(input_user_buffer);
+     
+    neai_anomalydetection_detect(input_user_buffer, &similarity);
+
+     */
+        
+        
+        
+        
+        
   
   
   while (1)
