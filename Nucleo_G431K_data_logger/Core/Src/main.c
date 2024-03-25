@@ -28,7 +28,7 @@
 
 
 #include "NanoEdgeAI.h"
-
+#include "knowledge.h"
 
 
 
@@ -73,13 +73,10 @@ UART_HandleTypeDef huart2;
 uint32_t row_count = 0;
 
 uint32_t raw_adc1_ch1_val = 0;
-uint32_t raw_adc1_ch2_val = 0;
-uint32_t raw_adc1_ch3_val = 0;
+//uint32_t raw_adc1_ch2_val = 0;
+//uint32_t raw_adc1_ch3_val = 0;
 
 float rawf_adc1_ch1_val = 0;
-float rawf_adc1_ch2_val = 0;
-float rawf_adc1_ch3_val = 0;
-
 
 uint8_t msg_bug[32];
 int msg_len = 0;
@@ -153,7 +150,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
       
       cnt_adc_int = 0;
       
-      HAL_GPIO_TogglePin(LED_G_GPIO_Port, LED_G_Pin);
+      //HAL_GPIO_TogglePin(LED_G_GPIO_Port, LED_G_Pin);
       
       LedState = !LedState;
   }
@@ -164,11 +161,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// AI
-
 
 // AI
 #define LEARNING_ITERATIONS 20
+
 float input_user_buffer[DATA_INPUT_USER * AXIS_NUMBER]; // 1536 * 1 = 1536
 // Buffer of input values 
 
@@ -198,6 +194,11 @@ void fill_buffer(float input_buffer[])
 
 
 
+
+uint32_t adc_buff_counter = 0;
+
+
+enum neai_state neai_learn_state = 0;
 
 
 
@@ -277,7 +278,7 @@ int main(void)
     // ai
     enum neai_state error_code = neai_anomalydetection_init();
     
-    uint8_t similarity = 0;  
+    static uint8_t similarity = 0;  
 
     if (error_code != NEAI_OK) 
     {
@@ -294,12 +295,14 @@ int main(void)
     /* Learning process ----------------------------------------------------------*/
     
     /*
+
     for (uint16_t iteration = 0 ; iteration < LEARNING_ITERATIONS ; iteration++) 
     {
         fill_buffer(input_user_buffer);
         
-        neai_anomalydetection_learn(input_user_buffer);
+        neai_learn_stateneai_anomalydetection_learn(input_user_buffer);
     }
+
     */
   
     /*
@@ -312,9 +315,11 @@ int main(void)
 
      */
         
+     neai_learn_state = neai_anomalydetection_knowledge(knowledge);   
         
-        
-        
+     __NOP();
+     __NOP();
+     __NOP();
         
   
   
@@ -325,30 +330,13 @@ int main(void)
     // Port marker HI
     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
     
-      
-    //HAL_ADCEx_InjectedStart(&hadc1);
-    //HAL_ADCEx_InjectedStart(&hadc2);
-    
-    
     __HAL_TIM_SET_COUNTER(&htim6, 0);
     
     
-    //HAL_ADCEx_InjectedPollForConversion(&hadc1, 1);    
-    //HAL_ADCEx_InjectedPollForConversion(&hadc2, 1);  
     
-    
-    //Vcode = HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_1);
-    
-    
-    
-    
-    //Vresult = (Vcode-2047) * (Vref*2) / 4096;
-  
     #define INERNAL_VREF_mV  1213  // 1.212V
     
     adc_data.v_onebit_mv = (INERNAL_VREF_mV * 1000) / adc_data.raw_vref;
-    //adc_data.v_power  = ((adc_data.v_onebit * adc_data.raw_vbat) * 3 ) / 1000;
-    //adc_data.v_ref    = (adc_data.v_onebit * adc_data.raw_vref) / 1000;
     
     adc_data.v_in_mv    = (adc_data.v_onebit_mv * adc_data.raw_vin ) / 1000;
     
@@ -358,20 +346,55 @@ int main(void)
       
     
     rawf_adc1_ch1_val =  Vresult;  //HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_1);
-    rawf_adc1_ch2_val = 0; //HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_2);
-    rawf_adc1_ch3_val = 0; //HAL_ADCEx_InjectedGetValue(&hadc2, ADC_INJECTED_RANK_3);   
+
     
     
-    //raw_adc1_ch1_val = HAL_ADCEx_InjectedGetValue(&hadc2, ADC_INJECTED_RANK_1);
-    //raw_adc1_ch2_val = HAL_ADCEx_InjectedGetValue(&hadc2, ADC_INJECTED_RANK_2);
-    //raw_adc1_ch3_val = HAL_ADCEx_InjectedGetValue(&hadc2, ADC_INJECTED_RANK_3);
+
+    // ai detection
+    
+    
+    input_user_buffer[adc_buff_counter] = rawf_adc1_ch1_val;
+    
+    adc_buff_counter ++;
+    
+    
+    if (adc_buff_counter >= DATA_INPUT_USER)
+    {
+        adc_buff_counter = 0;
+        
+        
+
+        
+        
+        
+        HAL_GPIO_WritePin(LED_G_GPIO_Port, LED_G_Pin, GPIO_PIN_SET);
+        
+        
+        // ai detection
+        neai_anomalydetection_detect(input_user_buffer, &similarity);
+        
+        if (similarity < 70)
+        {
+            HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_SET);
+        }
+        else
+        {
+            HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_RESET);
+        }
+    
+        
+        HAL_GPIO_WritePin(LED_G_GPIO_Port, LED_G_Pin, GPIO_PIN_RESET);
+    }
     
     
     
-    
-    //double data1 = raw_adc1_ch1_val;
+    /*
+    ------------------
+    Asqusition mode
+    ------------------
+
     double data1 = (double)rawf_adc1_ch1_val;
-    
+
     if(row_count < (ROW_LEN - 1) )
     {
         row_count += 1;
@@ -387,7 +410,10 @@ int main(void)
      
 
     HAL_UART_Transmit(&huart2, msg_bug, msg_len, 1);  // 102 uSec
-                         
+
+    */                     
+    
+    
     
     
     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);  

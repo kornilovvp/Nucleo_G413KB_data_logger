@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project>
     <fileVersion>5</fileVersion>
-    <fileChecksum>3264757234</fileChecksum>
+    <fileChecksum>3587844093</fileChecksum>
     <configuration>
         <name>Nucleo_G431K_data_logger</name>
         <outputs>
@@ -202,7 +202,7 @@
             <inputs>
                 <tool>
                     <name>ICCARM</name>
-                    <file> 10 36 5 57 69 27 61 35 55 87 37 88 39 73 19 45 74 96 58 21 101 23 44 46 72 60 56 47 33 83 13 18 63 104 50 16 41 92 25 28 49 12 42 66 100 1</file>
+                    <file> 10 36 5 57 69 27 61 35 55 87 37 88 39 73 19 45 74 96 58 21 101 23 44 46 72 60 56 47 33 83 13 18 63 104 50 16 41 92 25 28 49 12 42 66 100 1 8</file>
                 </tool>
             </inputs>
         </file>
