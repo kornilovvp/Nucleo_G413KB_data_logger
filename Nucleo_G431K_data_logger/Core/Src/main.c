@@ -106,6 +106,11 @@ uint32_t dbg_anc_int_per_1ec = 0;
 uint32_t cnt_adc_int = 0;
 
 
+uint32_t dbg_daq_reads_per_1ec = 0;
+uint32_t cnt_daq_reads_int = 0;
+
+
+
 typedef struct 
 {
     uint32_t raw_vref;
@@ -149,6 +154,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
       dbg_anc_int_per_1ec = cnt_adc_int;
       
       cnt_adc_int = 0;
+      
+      
+      
+      dbg_daq_reads_per_1ec = cnt_daq_reads_int;
+      
+      cnt_daq_reads_int = 0;
+      
+      
       
       //HAL_GPIO_TogglePin(LED_G_GPIO_Port, LED_G_Pin);
       
@@ -199,6 +212,12 @@ uint32_t adc_buff_counter = 0;
 
 
 enum neai_state neai_learn_state = 0;
+
+
+
+
+uint32_t button_selected = 0;
+uint32_t fl_ai_new_learn = 0;
 
 
 
@@ -349,6 +368,26 @@ int main(void)
 
     
     
+    
+    
+    
+    // button detecting
+    if ( HAL_GPIO_ReadPin(BUTTON_GPIO_Port, BUTTON_Pin) == GPIO_PIN_RESET)
+    {
+        __NOP();
+        __NOP();
+        __NOP();
+        __NOP();
+        
+        fl_ai_new_learn = 1;
+    }
+    
+    
+    
+    
+    
+    
+    
 
     // ai detection
     
@@ -370,10 +409,40 @@ int main(void)
         HAL_GPIO_WritePin(LED_G_GPIO_Port, LED_G_Pin, GPIO_PIN_SET);
         
         
-        // ai detection
-        neai_anomalydetection_detect(input_user_buffer, &similarity);
+        // new learn function
+        if ( fl_ai_new_learn )
+        {
+            fl_ai_new_learn = 0;
         
-        if (similarity < 70)
+            
+            for (uint16_t iteration = 0 ; iteration < LEARNING_ITERATIONS*5 ; iteration++) 
+            {
+                //fill_buffer(input_user_buffer);
+                
+                neai_learn_state = neai_anomalydetection_learn(input_user_buffer);
+            }
+            
+            __NOP();
+            __NOP();
+            __NOP();
+            __NOP();
+        }
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        // ai detection
+        neai_learn_state = neai_anomalydetection_detect(input_user_buffer, &similarity);
+        
+        if (similarity < 95)
         {
             HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_SET);
         }
@@ -418,7 +487,7 @@ int main(void)
     
     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);  
     
-    
+    cnt_daq_reads_int++;
     
     while( __HAL_TIM_GET_COUNTER(&htim6) < 33 )  // 330 usec delay
     {    
@@ -519,8 +588,8 @@ static void MX_ADC1_Init(void)
   hadc1.Init.DMAContinuousRequests = ENABLE;
   hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc1.Init.OversamplingMode = ENABLE;
-  hadc1.Init.Oversampling.Ratio = ADC_OVERSAMPLING_RATIO_128;//ADC_OVERSAMPLING_RATIO_256;
-  hadc1.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_7;//ADC_RIGHTBITSHIFT_8;
+  hadc1.Init.Oversampling.Ratio = ADC_OVERSAMPLING_RATIO_256;
+  hadc1.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_8;
   hadc1.Init.Oversampling.TriggeredMode = ADC_TRIGGEREDMODE_SINGLE_TRIGGER;
   hadc1.Init.Oversampling.OversamplingStopReset = ADC_REGOVERSAMPLING_CONTINUED_MODE;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
@@ -755,18 +824,18 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LED_G_Pin|LED_R_Pin|LD2_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin : BUTTON_Pin */
+  GPIO_InitStruct.Pin = BUTTON_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(BUTTON_GPIO_Port, &GPIO_InitStruct);
+
   /*Configure GPIO pins : LED_G_Pin LED_R_Pin LD2_Pin */
   GPIO_InitStruct.Pin = LED_G_Pin|LED_R_Pin|LD2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : BUTTON_Pin */
-  GPIO_InitStruct.Pin = BUTTON_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(BUTTON_GPIO_Port, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
