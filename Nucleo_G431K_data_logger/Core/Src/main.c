@@ -125,7 +125,7 @@ _adc adc_data;
 uint16_t adc_raw_data[6];
 
 
-
+uint8_t LedState = 0;;
 
 
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc)
@@ -150,6 +150,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
       cnt_adc_int = 0;
       
       HAL_GPIO_TogglePin(LED_G_GPIO_Port, LED_G_Pin);
+      
+      LedState = !LedState;
   }
 
 }
@@ -232,14 +234,14 @@ int main(void)
     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
     
       
-    HAL_ADCEx_InjectedStart(&hadc1);
+    //HAL_ADCEx_InjectedStart(&hadc1);
     //HAL_ADCEx_InjectedStart(&hadc2);
     
     
     __HAL_TIM_SET_COUNTER(&htim6, 0);
     
     
-    HAL_ADCEx_InjectedPollForConversion(&hadc1, 1);    
+    //HAL_ADCEx_InjectedPollForConversion(&hadc1, 1);    
     //HAL_ADCEx_InjectedPollForConversion(&hadc2, 1);  
     
     
@@ -399,8 +401,8 @@ static void MX_ADC1_Init(void)
   hadc1.Init.DMAContinuousRequests = ENABLE;
   hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc1.Init.OversamplingMode = ENABLE;
-  hadc1.Init.Oversampling.Ratio = ADC_OVERSAMPLING_RATIO_256;
-  hadc1.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_8;
+  hadc1.Init.Oversampling.Ratio = ADC_OVERSAMPLING_RATIO_128;//ADC_OVERSAMPLING_RATIO_256;
+  hadc1.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_7;//ADC_RIGHTBITSHIFT_8;
   hadc1.Init.Oversampling.TriggeredMode = ADC_TRIGGEREDMODE_SINGLE_TRIGGER;
   hadc1.Init.Oversampling.OversamplingStopReset = ADC_REGOVERSAMPLING_CONTINUED_MODE;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
