@@ -52,7 +52,9 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
+ADC_HandleTypeDef hadc2;
 DMA_HandleTypeDef hdma_adc1;
+DMA_HandleTypeDef hdma_adc2;
 
 TIM_HandleTypeDef htim6;
 TIM_HandleTypeDef htim7;
@@ -68,18 +70,15 @@ UART_HandleTypeDef huart2;
 //#define UART_SPEED 1843200 // 52  uSec 
 
 
-#define ROW_LEN  (1536)
+//#define ROW_LEN  (1536)
 
-uint32_t row_count = 0;
-
-uint32_t raw_adc1_ch1_val = 0;
+//uint32_t row_count = 0;
+//uint32_t raw_adc1_ch1_val = 0;
 //uint32_t raw_adc1_ch2_val = 0;
 //uint32_t raw_adc1_ch3_val = 0;
-
-float rawf_adc1_ch1_val = 0;
-
-uint8_t msg_bug[32];
-int msg_len = 0;
+//float rawf_adc1_ch1_val = 0;
+//uint8_t msg_bug[32];
+//int msg_len = 0;
 
 
 
@@ -94,7 +93,13 @@ static void MX_USART2_UART_Init(void);
 static void MX_TIM6_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM7_Init(void);
+static void MX_ADC2_Init(void);
 /* USER CODE BEGIN PFP */
+
+
+
+
+
 
 /* USER CODE END PFP */
 
@@ -102,71 +107,276 @@ static void MX_TIM7_Init(void);
 /* USER CODE BEGIN 0 */
 
 
-uint32_t dbg_anc_int_per_1ec = 0;
-uint32_t cnt_adc_int = 0;
 
 
-uint32_t dbg_daq_reads_per_1ec = 0;
-uint32_t cnt_daq_reads_int = 0;
+
+
+
+//uint32_t dbg_daq_reads_per_1ec = 0;
+//uint32_t cnt_daq_reads_int = 0;
 
 
 
 typedef struct 
 {
+    uint32_t raw_updated;
     uint32_t raw_vref;
     uint32_t raw_vbat;
+    uint32_t raw_vtemp;
     uint32_t raw_vin;
     
     uint32_t v_onebit_mv;
     uint32_t v_power;
     uint32_t v_ref;
-    uint32_t v_in_mv;
+    //uint32_t v_in_mv;
 
 }_adc;
+
 _adc adc_data;
 
 
 
 
-uint16_t adc_raw_data[6];
+
+typedef struct 
+{
+    uint32_t dbg_adc1_int_per_1ec;
+    uint32_t dbg_adc1_int;
+
+    uint32_t dbg_adc2_int_per_1ec;
+    uint32_t dbg_adc2_int;
+    
+    
+}_dbg;
+
+_dbg debug;
+
+
+
+
+
+#define INERNAL_VREF_mV  1213  // 1.212V
+
+
+// Buffer for ADC1
+uint16_t adc1_raw_data[6];
+
+
+//float Vref = 3.3f;
+//float Vzero = Vref/2.0f;
+//float Vcode = 0.0f;
+float Vresult = 0.0f;
+  
+
+
+
+/*
+#define ADC_DATA_EMPTY  0
+#define ADC_DATA_FULL 10
+uint8_t adc_data_buf1 = ADC_DATA_EMPTY;
+uint8_t adc_data_buf2 = ADC_DATA_EMPTY;
+
+#define DMA_LOCK_STOP 0
+#define DMA_LOCK_BUF1 10
+#define DMA_LOCK_BUF2 20
+
+uint8_t dma_buffer_lock = DMA_LOCK_STOP;
+*/
+
+// Buffer for ADC2
+uint16_t adc2_raw_data_buf1[DATA_INPUT_USER*AXIS_NUMBER];
+//uint16_t adc2_raw_data_buf2[DATA_INPUT_USER*AXIS_NUMBER];
+
+
+uint8_t  adc_data_ready = 0;
+uint16_t tmp_buff[DATA_INPUT_USER];
+
+
+
 
 
 uint8_t LedState = 0;;
 
 
+
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
+{
+    if (hadc == &hadc1)
+    {
+        debug.dbg_adc1_int++;
+        
+        adc_data.raw_updated = 1;
+        adc_data.raw_vtemp = adc1_raw_data[0];
+        adc_data.raw_vref  = adc1_raw_data[1];
+        adc_data.raw_vbat  = adc1_raw_data[2];
+        
+        //HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+    }
+    
+    
+   if (hadc == &hadc2)
+    {
+        HAL_ADC_Stop_DMA(&hadc2);
+      
+        
+        // DEBUG
+        HAL_GPIO_WritePin(LED_G_GPIO_Port, LED_G_Pin, GPIO_PIN_SET);
+        
+        
+        debug.dbg_adc2_int++;
+    
+        // copy data to temp buf
+        for ( uint32_t i = 0; i < DATA_INPUT_USER; i++ )
+        {
+            tmp_buff[i] = adc2_raw_data_buf1[i];
+        }
+        
+        adc_data_ready = 1;
+        
+        // DEBUG
+        HAL_GPIO_WritePin(LED_G_GPIO_Port, LED_G_Pin, GPIO_PIN_RESET);
+        
+        
+        HAL_ADC_Start_DMA(&hadc2, (uint32_t*)adc2_raw_data_buf1, DATA_INPUT_USER);
+    }
+    
+    
+    
+}
+
+
+
+
+
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc)
 {
-    cnt_adc_int++;
-    
-    adc_data.raw_vin  = adc_raw_data[0];
-    adc_data.raw_vref = adc_raw_data[1];
-    adc_data.raw_vbat = adc_raw_data[2];
+    __NOP();
+    __NOP();
+    __NOP();
+    __NOP();  
+  
+  
+  /*
+
+  
+ */ 
+
+  
+  
+  /*
+   if (hadc == &hadc2)
+    {
+        HAL_ADC_Stop_DMA(&hadc2);
+      
+        debug.dbg_adc2_int++;
+
+        HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+   */     
+        
+        /*
+        if (dma_buffer_lock == DMA_LOCK_BUF1)
+        {
+        
+            // notify buff1 ready
+            
+            adc_data_buf1 = ADC_DATA_FULL;
+            
+            
+            // switch to buff 2
+            
+            if (adc_data_buf2 == ADC_DATA_FULL)
+            {
+                // user does not clear current buffer, something wrong
+                while(1)
+                {
+                    __NOP();
+                    __NOP();
+                    __NOP();
+                    __NOP();
+                }
+            }
+            
+            // Start adc on buffer 2
+            
+            dma_buffer_lock = DMA_LOCK_BUF2;
+            
+            HAL_ADC_Start_DMA(&hadc2, (uint32_t*)adc2_raw_data_buf2, DATA_INPUT_USER);
+          
+        }
+        else if (dma_buffer_lock == DMA_LOCK_BUF2)
+        {
+            // notify buff2 ready
+            
+            adc_data_buf2 = ADC_DATA_FULL;
+            
+            
+            // switch to buff 1
+            
+            if (adc_data_buf1 == ADC_DATA_FULL)
+            {
+                // user does not clear current buffer, something wrong
+                while(1)
+                {
+                    __NOP();
+                    __NOP();
+                    __NOP();
+                    __NOP();
+                }
+            }   
+            
+            // Start adc on buffer 1
+            
+            dma_buffer_lock = DMA_LOCK_BUF1;
+            
+            HAL_ADC_Start_DMA(&hadc2, (uint32_t*)adc2_raw_data_buf1, DATA_INPUT_USER);
+        }
+        */
+        
+        
+        
+    //}
+
 }
+
+
+
+
+
+
 
 
 
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-  // 1 sec
-  if (htim == &htim7)
-  {
-      dbg_anc_int_per_1ec = cnt_adc_int;
+    // 1 sec
+    if (htim == &htim7)
+    {
       
-      cnt_adc_int = 0;
-      
-      
-      
-      dbg_daq_reads_per_1ec = cnt_daq_reads_int;
-      
-      cnt_daq_reads_int = 0;
-      
-      
-      
-      //HAL_GPIO_TogglePin(LED_G_GPIO_Port, LED_G_Pin);
-      
-      LedState = !LedState;
-  }
+        // debug adc 1
+        debug.dbg_adc1_int_per_1ec = debug.dbg_adc1_int;
+        
+        debug.dbg_adc1_int = 0;
+        
+        
+        // debug adc 2
+        debug.dbg_adc2_int_per_1ec = debug.dbg_adc2_int;
+        
+        debug.dbg_adc2_int = 0;  
+        
+        
+        //debug 
+        //dbg_daq_reads_per_1ec = cnt_daq_reads_int;
+        
+        //cnt_daq_reads_int = 0;
+        
+
+
+        //HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+        
+        LedState = !LedState;
+    }
 
 }
 
@@ -182,43 +392,39 @@ float input_user_buffer[DATA_INPUT_USER * AXIS_NUMBER]; // 1536 * 1 = 1536
 // Buffer of input values 
 
 
-/* Private function prototypes defined by user ---------------------------------*/
-/*
- * @brief Collect data process
- *
- * This function is defined by user, depends on applications and sensors
- *
- * @param sample_buffer: [in, out] buffer of sample values
- * @retval None
- * @note   If AXIS_NUMBER = 3 (cf NanoEdgeAI.h), the buffer must be
- *         ordered as follow:
- *         [x0 y0 z0 x1 y1 z1 ... xn yn zn], where xi, yi and zi
- *         are the values for x, y and z axes, n is equal to
- *         DATA_INPUT_USER (cf NanoEdgeAI.h)
- */
-void fill_buffer(float input_buffer[])
+
+
+void fill_buffer(uint16_t input_buffer[])
 {
-	/* USER BEGIN */
-	/* USER END */
+    adc_data.v_onebit_mv = (INERNAL_VREF_mV * 1000) / adc_data.raw_vref;
+    
+    //adc_data.v_in_mv    = (adc_data.v_onebit_mv * adc_data.raw_vin ) / 1000;
+  
+    for (uint32_t i = 0; i < DATA_INPUT_USER; i++)
+    {
+        input_user_buffer[i] = ( adc_data.v_onebit_mv * (float)input_buffer[i] ) / 1000 / 1000;   // uV -> mV -> V
+    }
 }
 
 
 
 
 
-
+enum neai_state error_code;
+uint8_t similarity = 0;  
 
 uint32_t adc_buff_counter = 0;
 
 
-enum neai_state neai_learn_state = 0;
+enum neai_state neai_learn_state;
 
 
 
 
 uint32_t button_selected = 0;
-uint32_t fl_ai_new_learn = 0;
 
+uint32_t fl_ai_new_learn = 0;
+uint32_t ai_treining_rounds = 0;
 
 
 
@@ -231,7 +437,7 @@ uint32_t fl_ai_new_learn = 0;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+  {
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -257,8 +463,45 @@ int main(void)
   MX_TIM6_Init();
   MX_ADC1_Init();
   MX_TIM7_Init();
+  MX_ADC2_Init();
   /* USER CODE BEGIN 2 */
 
+  /* USER CODE END 2 */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+  
+  
+  
+  
+  // ai
+
+
+  error_code = neai_anomalydetection_init();
+
+  if (error_code != NEAI_OK) 
+  {
+      /* This happens if the library works into a not supported board. */
+      __NOP();
+      __NOP();
+      __NOP();
+      __NOP();
+  }
+
+  //neai_learn_state = neai_anomalydetection_knowledge(knowledge);   
+      
+  if (error_code != NEAI_OK) 
+  {
+      __NOP();
+      __NOP();
+      __NOP();
+      __NOP();
+  }
+    
+    
+    
+    
+  
   // 1 sec
   HAL_TIM_Base_Start_IT(&htim7); 
   
@@ -267,48 +510,47 @@ int main(void)
   HAL_TIM_Base_Start(&htim6);  
   
   
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+  }
   
-  
-  //float Vref = 3.3f;
-  //float Vzero = Vref/2.0f;
-  //float Vcode = 0.0f;
-  float Vresult = 0.0f;
-  
+  // Start ADC1
   
   
   HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
+
+  HAL_Delay(100);
+
+  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc1_raw_data, 3);
+  
+  while( adc_data.raw_updated == 0 ){  }  
+
+  
+
+  
+  
+  HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
   
   HAL_Delay(100);
   
-  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_raw_data, 3);
+  
+  /*
+  adc_data_buf1 = ADC_DATA_EMPTY;
+  adc_data_buf2 = ADC_DATA_EMPTY;
+  
+  dma_buffer_lock = DMA_LOCK_BUF1;
+  */
   
   
+  HAL_ADC_Start_DMA(&hadc2, (uint32_t*)adc2_raw_data_buf1, DATA_INPUT_USER);
+  
+  // Disable half receive adc callback
+  __HAL_DMA_DISABLE_IT(hadc2.DMA_Handle , DMA_IT_HT);
+  
+  //HAL_ADC_Start_DMA(&hadc2, (uint32_t*)adc2_raw_data_buf1, 100);
   
   
-  
-  
-  
-  
-  
-    // ai
-    enum neai_state error_code = neai_anomalydetection_init();
-    
-    static uint8_t similarity = 0;  
 
-    if (error_code != NEAI_OK) 
-    {
-        /* This happens if the library works into a not supported board. */
-        __NOP();
-        __NOP();
-        __NOP();
-        __NOP();
-    }
+  
 
-    
     
     
     /* Learning process ----------------------------------------------------------*/
@@ -334,112 +576,127 @@ int main(void)
 
      */
         
-     neai_learn_state = neai_anomalydetection_knowledge(knowledge);   
-        
-     __NOP();
-     __NOP();
-     __NOP();
-        
-  
-  
-  while (1)
-  {
-    
-    
-    // Port marker HI
-    HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
-    
-    __HAL_TIM_SET_COUNTER(&htim6, 0);
-    
-    
-    
-    #define INERNAL_VREF_mV  1213  // 1.212V
-    
-    adc_data.v_onebit_mv = (INERNAL_VREF_mV * 1000) / adc_data.raw_vref;
-    
-    adc_data.v_in_mv    = (adc_data.v_onebit_mv * adc_data.raw_vin ) / 1000;
-    
-    Vresult =  (double)adc_data.v_in_mv / 1000;
-      
-      
-      
-    
-    rawf_adc1_ch1_val =  Vresult;  //HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_1);
 
-    
-    
-    
+        
+  
+  while(1)
+  {
+  
+    // weating data for work
     
     
     // button detecting
     if ( HAL_GPIO_ReadPin(BUTTON_GPIO_Port, BUTTON_Pin) == GPIO_PIN_RESET)
     {
-        __NOP();
-        __NOP();
-        __NOP();
-        __NOP();
-        
         fl_ai_new_learn = 1;
+    }
+    else
+    {
+        if ( fl_ai_new_learn == 1)
+        {
+            fl_ai_new_learn = 2;
+        }
+        
+
     }
     
     
     
+    static uint32_t learn_mode = 25;
     
     
-    
-    
-
-    // ai detection
-    
-    
-    input_user_buffer[adc_buff_counter] = rawf_adc1_ch1_val;
-    
-    adc_buff_counter ++;
-    
-    
-    if (adc_buff_counter >= DATA_INPUT_USER)
+    if ( adc_data_ready )
     {
-        adc_buff_counter = 0;
-        
-        
-
-        
-        
-        
+        adc_data_ready = 0;
+    
+    
         HAL_GPIO_WritePin(LED_G_GPIO_Port, LED_G_Pin, GPIO_PIN_SET);
         
+        fill_buffer(tmp_buff);
         
-        // new learn function
-        if ( fl_ai_new_learn )
+        
+        
+        
+        
+        if ( fl_ai_new_learn == 2 )
         {
             fl_ai_new_learn = 0;
-        
             
-            for (uint16_t iteration = 0 ; iteration < LEARNING_ITERATIONS*5 ; iteration++) 
-            {
-                //fill_buffer(input_user_buffer);
-                
-                neai_learn_state = neai_anomalydetection_learn(input_user_buffer);
-            }
-            
-            __NOP();
-            __NOP();
-            __NOP();
-            __NOP();
+            learn_mode = 25;
         }
         
         
         
         
+        if (learn_mode)
+        {
+            if ( learn_mode == 25)
+            {
+                neai_anomalydetection_init();
+            }
+          
+            learn_mode --;
+            
+            HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_SET);
+            
+            error_code = neai_anomalydetection_learn(input_user_buffer);
+            
+            HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_RESET);
+          
+        }
+        else
+        {
+        
+            error_code = neai_anomalydetection_detect(input_user_buffer, &similarity);
+            
+            
+            if (similarity < 95)
+            {
+                HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_SET);
+            }
+            else
+            {
+                HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_RESET);
+            }    
+        
+        }
+        
+        
+        HAL_GPIO_WritePin(LED_G_GPIO_Port, LED_G_Pin, GPIO_PIN_RESET);
+    
+    }
+    
+    
+    
+    
+    // Test buffer 1
+    /*
+    if ( ( adc_data_buf1 == ADC_DATA_FULL ) || ( adc_data_buf2 == ADC_DATA_FULL ) )
+    {
+      
+        if ( adc_data_buf1 == ADC_DATA_FULL )
+        {
+            // move data to ai buffer
+            fill_buffer(adc2_raw_data_buf1);
+            
+            // Mark buffr as free
+            adc_data_buf1 = ADC_DATA_EMPTY;
+        }
+      
+        
+        // Test buffer 2
+        if (adc_data_buf2 == ADC_DATA_FULL)
+        {
+            // move data to ai buffer
+            fill_buffer(adc2_raw_data_buf2);
+          
+            // MArk buffr as free
+            adc_data_buf2 = ADC_DATA_EMPTY;
+        }
         
         
         
         
-        
-        
-        
-        
-        // ai detection
         neai_learn_state = neai_anomalydetection_detect(input_user_buffer, &similarity);
         
         if (similarity < 95)
@@ -450,50 +707,145 @@ int main(void)
         {
             HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_RESET);
         }
-    
         
-        HAL_GPIO_WritePin(LED_G_GPIO_Port, LED_G_Pin, GPIO_PIN_RESET);
-    }
-    
-    
-    
-    /*
-    ------------------
-    Asqusition mode
-    ------------------
 
-    double data1 = (double)rawf_adc1_ch1_val;
+    }
+    */
 
-    if(row_count < (ROW_LEN - 1) )
-    {
-        row_count += 1;
-        
-        msg_len = sprintf((char*)msg_bug, "%.4f ", data1);  // 28 uSec
-    }
-    else
-    {
-        row_count = 0;
-        
-        msg_len = sprintf((char*)msg_bug, "%.4f\n", data1);  // 28 uSec
-    }
+    
+  }
      
+     
+  
+  while (1)
+  {
+    
+    
+      // Port marker HI
+      HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+      
+      __HAL_TIM_SET_COUNTER(&htim6, 0);
+      
+      
+      
+      
+      
+      //adc_data.v_onebit_mv = (INERNAL_VREF_mV * 1000) / adc_data.raw_vref;
+      
+      //adc_data.v_in_mv    = (adc_data.v_onebit_mv * adc_data.raw_vin ) / 1000;
+      
+      //Vresult =  (double)adc_data.v_in_mv / 1000;
+        
+        
+        
+      
+      //rawf_adc1_ch1_val = Vresult;  //HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_1);
 
-    HAL_UART_Transmit(&huart2, msg_bug, msg_len, 1);  // 102 uSec
+      
+      
+      
+      
+      
+      // button detecting
+      if ( HAL_GPIO_ReadPin(BUTTON_GPIO_Port, BUTTON_Pin) == GPIO_PIN_RESET)
+      {
+          fl_ai_new_learn = 1;
+      }
+      else
+      {
+          fl_ai_new_learn = 0;
+          
+          ai_treining_rounds = 0;
+      }
+    
+    
+    
+        
+    
+    
+    
 
-    */                     
-    
-    
-    
-    
-    HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);  
-    
-    cnt_daq_reads_int++;
-    
-    while( __HAL_TIM_GET_COUNTER(&htim6) < 33 )  // 330 usec delay
-    {    
-    }
+      // ai detection
+      
+      
+      //input_user_buffer[adc_buff_counter] = rawf_adc1_ch1_val;
+      
+      adc_buff_counter ++;
+      
+      /*
+      if (adc_buff_counter >= DATA_INPUT_USER)
+      {
+          adc_buff_counter = 0;
+          
+          
 
-    
+          
+          
+          
+          HAL_GPIO_WritePin(LED_G_GPIO_Port, LED_G_Pin, GPIO_PIN_SET);
+          
+          
+          
+          
+          // new learn function
+          if ( fl_ai_new_learn )
+          {
+
+          
+              
+              //for (uint16_t iteration = 0 ; iteration < LEARNING_ITERATIONS*5 ; iteration++) 
+              //{
+                  //fill_buffer(input_user_buffer);
+                  
+              neai_learn_state = neai_anomalydetection_learn(input_user_buffer);
+              
+              //}
+              
+              ai_treining_rounds++;
+              
+              __NOP();
+              __NOP();
+              __NOP();
+              __NOP();
+          }
+          else
+          {
+          
+          
+              // ai detection
+              neai_learn_state = neai_anomalydetection_detect(input_user_buffer, &similarity);
+              
+              if (similarity < 95)
+              {
+                  HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_SET);
+              }
+              else
+              {
+                  HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_RESET);
+              }
+      
+          }
+          
+          
+          
+          HAL_GPIO_WritePin(LED_G_GPIO_Port, LED_G_Pin, GPIO_PIN_RESET);
+      }
+      
+      */
+      
+
+      /*
+      
+      
+      HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);  
+      
+      //cnt_daq_reads_int++;
+      
+      while( __HAL_TIM_GET_COUNTER(&htim6) < 33 )  // 330 usec delay
+      {    
+      }
+
+    */
     
     
     
@@ -502,6 +854,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
   }
+
   /* USER CODE END 3 */
 }
 
@@ -573,7 +926,7 @@ static void MX_ADC1_Init(void)
   /** Common config
   */
   hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc1.Init.GainCompensation = 0;
@@ -607,9 +960,9 @@ static void MX_ADC1_Init(void)
 
   /** Configure Regular Channel
   */
-  sConfig.Channel = ADC_CHANNEL_1;
+  sConfig.Channel = ADC_CHANNEL_TEMPSENSOR_ADC1;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
@@ -638,7 +991,7 @@ static void MX_ADC1_Init(void)
 
   /** Configure Injected Channel
   */
-  sConfigInjected.InjectedChannel = ADC_CHANNEL_1;
+  sConfigInjected.InjectedChannel = ADC_CHANNEL_VBAT;
   sConfigInjected.InjectedRank = ADC_INJECTED_RANK_1;
   sConfigInjected.InjectedSamplingTime = ADC_SAMPLETIME_2CYCLES_5;
   sConfigInjected.InjectedSingleDiff = ADC_SINGLE_ENDED;
@@ -659,6 +1012,69 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
+  * @brief ADC2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC2_Init(void)
+{
+
+  /* USER CODE BEGIN ADC2_Init 0 */
+
+  /* USER CODE END ADC2_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC2_Init 1 */
+
+  /* USER CODE END ADC2_Init 1 */
+
+  /** Common config
+  */
+  hadc2.Instance = ADC2;
+  hadc2.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV4;
+  hadc2.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc2.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc2.Init.GainCompensation = 0;
+  hadc2.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc2.Init.EOCSelection = ADC_EOC_SEQ_CONV;
+  hadc2.Init.LowPowerAutoWait = DISABLE;
+  hadc2.Init.ContinuousConvMode = ENABLE;
+  hadc2.Init.NbrOfConversion = 1;
+  hadc2.Init.DiscontinuousConvMode = DISABLE;
+  hadc2.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc2.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc2.Init.DMAContinuousRequests = DISABLE;
+  hadc2.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  hadc2.Init.OversamplingMode = ENABLE;
+  hadc2.Init.Oversampling.Ratio = ADC_OVERSAMPLING_RATIO_256;
+  hadc2.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_8;
+  hadc2.Init.Oversampling.TriggeredMode = ADC_TRIGGEREDMODE_SINGLE_TRIGGER;
+  hadc2.Init.Oversampling.OversamplingStopReset = ADC_REGOVERSAMPLING_CONTINUED_MODE;
+  if (HAL_ADC_Init(&hadc2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_1;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_12CYCLES_5;
+  sConfig.SingleDiff = ADC_SINGLE_ENDED;
+  sConfig.OffsetNumber = ADC_OFFSET_NONE;
+  sConfig.Offset = 0;
+  if (HAL_ADC_ConfigChannel(&hadc2, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC2_Init 2 */
+
+  /* USER CODE END ADC2_Init 2 */
 
 }
 
@@ -752,7 +1168,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE BEGIN USART2_Init 1 */
 
-  #warning please sen instade 115200 the defs UART_SPEED
+  //#warning please sen instade 115200 the defs UART_SPEED
   
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
@@ -800,8 +1216,11 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA1_Channel1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 1, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+  /* DMA1_Channel2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
 
 }
 

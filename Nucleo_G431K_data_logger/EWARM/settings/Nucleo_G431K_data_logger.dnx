@@ -28,7 +28,7 @@
         <EnforceMemoryConfiguration>1</EnforceMemoryConfiguration>
     </ArmDriver>
     <DebugChecksum>
-        <Checksum>236961446</Checksum>
+        <Checksum>3449191303</Checksum>
     </DebugChecksum>
     <Exceptions>
         <StopOnUncaught>_ 0</StopOnUncaught>
@@ -64,7 +64,10 @@
         <ITMlogFile>$PROJ_DIR$\ITM.log</ITMlogFile>
     </SWOTraceHWSettings>
     <watch_formats>
-        <Fmt0>{W}42:similarity	3	0</Fmt0>
+        <Fmt0>{W}42:adc_data_buf1	3	0</Fmt0>
+        <Fmt1>{W}42:adc_data_buf2	3	0</Fmt1>
+        <Fmt2>{W}42:dma_buffer_lock	3	0</Fmt2>
+        <Fmt3>{W}42:similarity	3	0</Fmt3>
     </watch_formats>
     <Trace2>
         <Enabled>0</Enabled>
