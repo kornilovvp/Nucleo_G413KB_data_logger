@@ -60,7 +60,8 @@ UART_HandleTypeDef huart2;
 //#define UART_SPEED 1843200 // 52  uSec 
 
 
-#define ROW_LEN  (1536)
+//#define ROW_LEN  (1536)
+#define ROW_LEN  (1024)
 
 uint32_t row_count = 0;
 
@@ -128,8 +129,12 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   
+  HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
+  
   
   HAL_TIM_Base_Start(&htim6);  
+  
+  
   
   
   /* USER CODE END 2 */
@@ -384,7 +389,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE BEGIN USART2_Init 1 */
 
-  #warning please sen instade 115200 the defs UART_SPEED
+  #warning please set instade 115200 the defs UART_SPEED
   
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;

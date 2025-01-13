@@ -23,9 +23,9 @@
 
 if ($debugfile -eq "")
 {
-& "C:\Program Files\IAR Systems\Embedded Workbench 9.1\common\bin\cspybat" -f "C:\STM32_Rep\Nucleo_G431K_data_logger\Nucleo_G431K_data_logger\EWARM\settings\Nucleo_G431K_data_logger.Nucleo_G431K_data_logger.general.xcl" --backend -f "C:\STM32_Rep\Nucleo_G431K_data_logger\Nucleo_G431K_data_logger\EWARM\settings\Nucleo_G431K_data_logger.Nucleo_G431K_data_logger.driver.xcl" 
+& "C:\Program Files\IAR Systems\Embedded Workbench 9.1\common\bin\cspybat" -f "D:\STM32_src\Nucleo_G413KB_data_logger\Nucleo_G431K_data_logger\EWARM\settings\Nucleo_G431K_data_logger.Nucleo_G431K_data_logger.general.xcl" --backend -f "D:\STM32_src\Nucleo_G413KB_data_logger\Nucleo_G431K_data_logger\EWARM\settings\Nucleo_G431K_data_logger.Nucleo_G431K_data_logger.driver.xcl" 
 }
 else
 {
-& "C:\Program Files\IAR Systems\Embedded Workbench 9.1\common\bin\cspybat" -f "C:\STM32_Rep\Nucleo_G431K_data_logger\Nucleo_G431K_data_logger\EWARM\settings\Nucleo_G431K_data_logger.Nucleo_G431K_data_logger.general.xcl" --debug_file=$debugfile --backend -f "C:\STM32_Rep\Nucleo_G431K_data_logger\Nucleo_G431K_data_logger\EWARM\settings\Nucleo_G431K_data_logger.Nucleo_G431K_data_logger.driver.xcl" 
+& "C:\Program Files\IAR Systems\Embedded Workbench 9.1\common\bin\cspybat" -f "D:\STM32_src\Nucleo_G413KB_data_logger\Nucleo_G431K_data_logger\EWARM\settings\Nucleo_G431K_data_logger.Nucleo_G431K_data_logger.general.xcl" --debug_file=$debugfile --backend -f "D:\STM32_src\Nucleo_G413KB_data_logger\Nucleo_G431K_data_logger\EWARM\settings\Nucleo_G431K_data_logger.Nucleo_G431K_data_logger.driver.xcl" 
 }

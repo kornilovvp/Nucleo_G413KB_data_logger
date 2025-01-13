@@ -2,7 +2,7 @@
 
 "C:\Program Files\IAR Systems\Embedded Workbench 9.1\arm\bin\armSTLINK.dll" 
 
-"C:\STM32_Rep\Nucleo_G431K_data_logger\Nucleo_G431K_data_logger\EWARM\Nucleo_G431K_data_logger\Exe\Nucleo_G431K_data_logger.out" 
+"D:\STM32_src\Nucleo_G413KB_data_logger\Nucleo_G431K_data_logger\EWARM\Nucleo_G431K_data_logger\Exe\Nucleo_G431K_data_logger.out" 
 
 --plugin="C:\Program Files\IAR Systems\Embedded Workbench 9.1\arm\bin\armbat.dll" 
 
